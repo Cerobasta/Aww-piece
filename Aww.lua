@@ -15,9 +15,9 @@ local Config = {
     TweenSpeed = 300
 }
 
--- Multi-Selection Target Arrays (Cleaned keywords for smart contains checking)
+-- Multi-Selection Target Arrays (Meticulously matched to Rise Piece indexes)
 local TargetsSelected = {
-    -- Mobs Class
+    -- Normal Mobs Class
     ["Angel"] = false,
     ["Bandit"] = false,
     ["Demi-God"] = false,
@@ -39,7 +39,7 @@ local TargetsSelected = {
     ["White Beard Boss"] = false
 }
 
--- REALIGNED DIRECTORY PATH HOOKS
+-- REALIGNED DIRECTORY PATH HOOKS (Your Double-Nested Locations)
 local BossFolder = workspace:WaitForChild("Map"):WaitForChild("Boss Spawn")
 local MobsFolder = workspace:WaitForChild("SpawnEnemy")
 
@@ -49,6 +49,28 @@ local AttackRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"
 local Player = game:GetService("Players").LocalPlayer
 local TweenService = game:GetService("TweenService")
 local inputService = game:GetService("UserInputService")
+
+-- Active Character Tool Inventory Scanner Core
+local function getAvailableWeapons()
+    local list = {}
+    local char = Player.Character
+    local backpack = Player:FindFirstChild("Backpack")
+    
+    if char then
+        for _, item in pairs(char:GetChildren()) do
+            if item:IsA("Tool") and not table.find(list, item.Name) then table.insert(list, item.Name) end
+        end
+    end
+    if backpack then
+        for _, item in pairs(backpack:GetChildren()) do
+            if item:IsA("Tool") and not table.find(list, item.Name) then table.insert(list, item.Name) end
+        end
+    end
+    if #list == 0 then table.insert(list, "Combat") end
+    return list
+end
+
+Config.SelectedWeapon = getAvailableWeapons()[1] or "Combat"
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Cero_Hub_RisePiece"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -168,25 +190,6 @@ ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ContentFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 30)
 end)
-local function getAvailableWeapons()
-    local list = {}
-    local char = Player.Character
-    local backpack = Player:FindFirstChild("Backpack")
-    
-    if char then
-        for _, item in pairs(char:GetChildren()) do
-            if item:IsA("Tool") and not table.find(list, item.Name) then table.insert(list, item.Name) end
-        end
-    end
-    if backpack then
-        for _, item in pairs(backpack:GetChildren()) do
-            if item:IsA("Tool") and not table.find(list, item.Name) then table.insert(list, item.Name) end
-        end
-    end
-    if #list == 0 then table.insert(list, "Combat") end
-    return list
-end
-
 local function createDropdown(parent, labelText, currentVal, options, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -5, 0, 36)
@@ -363,7 +366,7 @@ local function createUnifiedFarmWindow(parent, panelTitle, farmGlobalKey, arrayO
     slideBall.Position = UDim2.new(0, 2, 0, 2)
     slideBall.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     slideBall.Parent = farmToggle
-    Instance.new("UICorner", slideBall).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", slideBall).CornerRadius = UDim.new(1, 0)
     
     farmToggle.MouseButton1Click:Connect(function()
         _G[farmGlobalKey] = not _G[farmGlobalKey]
@@ -409,7 +412,7 @@ local function createUnifiedFarmWindow(parent, panelTitle, farmGlobalKey, arrayO
 
     dropdownSelector.MouseButton1Click:Connect(function() popoutMenu.Visible = not popoutMenu.Visible end)
 
-        for _, optName in ipairs(arrayOptionsList) do
+    for _, optName in ipairs(arrayOptionsList) do
         local row = Instance.new("TextButton")
         row.Size = UDim2.new(1, -4, 0, 26)
         row.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
@@ -423,19 +426,19 @@ local function createUnifiedFarmWindow(parent, panelTitle, farmGlobalKey, arrayO
         Instance.new("UICorner", row).CornerRadius = UDim.new(0, 3)
 
         row.MouseButton1Click:Connect(function()
-            TargetsSelected[optName] = not TargetsSelected[optName]
-            row.BackgroundColor3 = TargetsSelected[optName] and Color3.fromRGB(240, 140, 20) or Color3.fromRGB(28, 28, 30)
-            row.TextColor3 = TargetsSelected[optName] and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(170, 170, 170)
-            
-            local activeCount = 0
-            for _, v in ipairs(arrayOptionsList) do 
-                if TargetsSelected[v] then 
-                    activeCount = activeCount + 1 
-                end 
-            end
-            dropdownSelector.Text = activeCount > 0 and "(" .. activeCount .. ") Selected" or "Choose target..."
-        end)
-    end
+                        TargetsSelected[optName] = not TargetsSelected[optName]
+        row.BackgroundColor3 = TargetsSelected[optName] and Color3.fromRGB(240, 140, 20) or Color3.fromRGB(28, 28, 30)
+        row.TextColor3 = TargetsSelected[optName] and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(170, 170, 170)
+        
+        local activeCount = 0
+        for _, v in ipairs(arrayOptionsList) do 
+            if TargetsSelected[v] then 
+                activeCount = activeCount + 1 
+            end 
+        end
+        dropdownSelector.Text = activeCount > 0 and "(" .. activeCount .. ") Selected" or "Choose target..."
+    end)
+end
 end
 
 -- Render settings panel fields
@@ -452,12 +455,11 @@ divMain.Parent = ContentFrame
 
 createUnifiedFarmWindow(ContentFrame, "Start Farm Mobs", "autofarmNPC", {"Angel", "Bandit", "Demi-God", "Demon", "Grade1 Sorcerer", "Monkey", "Mr Boom Boom", "Sailor", "Spellblade"})
 createUnifiedFarmWindow(ContentFrame, "Start Farm Bosses", "autofarmBoss", {"Ace Boss", "Bandit Boss", "Finger Bearer Boss", "Gojo Boss", "Itadori Boss", "Kashimo Boss", "Kizaru Boss", "White Beard Boss"})
-
-Config.SelectedWeapon = getAvailableWeapons()[1] or "Combat"
 -- =============================================================================
--- [BOX 4: DOUBLE-NESTED DEEP SCRAPER ENGINE]
+-- [BOX 4: REPAIRED DEEP NESTED SCRAPER & ATTACK ENGINE]
 -- =============================================================================
 
+-- Background Thread: Continuous Geometry No-Collide Mode
 task.spawn(function()
     while true do
         if _G.autofarmNPC or _G.autofarmBoss then
@@ -465,7 +467,9 @@ task.spawn(function()
                 local char = Player.Character
                 if char then
                     for _, part in pairs(char:GetDescendants()) do
-                        if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
+                        if part:IsA("BasePart") and part.CanCollide then 
+                            part.CanCollide = false 
+                        end
                     end
                 end
             end)
@@ -474,6 +478,7 @@ task.spawn(function()
     end
 end)
 
+-- Stable Weapon Controller: Handles inventory equips on spawn without lag loops
 local function handleStableAutoEquip(character)
     task.wait(1.2)
     if (_G.autofarmNPC or _G.autofarmBoss) and Config.SelectedWeapon ~= "Default" then
@@ -493,17 +498,18 @@ end
 Player.CharacterAdded:Connect(handleStableAutoEquip)
 if Player.Character then task.spawn(handleStableAutoEquip, Player.Character) end
 
--- STUN-BYPASS NETWORK ATTACK LOOP
+-- ANIMATION BYPASS REMOTE INJECTOR: Ignores player arm-locks and stuns completely!
 task.spawn(function()
     while true do
         if _G.autofarmNPC or _G.autofarmBoss then
             pcall(function()
                 local activeWeapon = (Config.SelectedWeapon ~= "Default") and Config.SelectedWeapon or "Combat"
+                -- Pushes your updated "Punching" remote payload properties natively
                 local attackPayload = { activeWeapon, "Punching" }
                 AttackRemote:FireServer(unpack(attackPayload))
             end)
         end
-        task.wait(0.13)
+        task.wait(0.13) -- Balanced frequency throughput to optimize clear speeds
     end
 end)
 
@@ -531,7 +537,7 @@ local function moveToTarget(hrp, targetCFrame)
     end
 end
 
--- DEEP SUB-FOLDER EXTRACTION LAYER
+-- DUAL-LAYER GEOMETRY SEARCH LOOPS (Fixed Folder Structural Paths Tracker)
 task.spawn(function()
     while true do
         task.wait(0.2)
@@ -543,11 +549,12 @@ task.spawn(function()
                 
                 if hrp and humanoid and humanoid.Health > 0 then
                     
-                    -- 1. DEEP SCRAPE: BOSS SPAWN LAYER ["Ace Boss[Lv. 475]"]["Ace Boss[Lv. 475]"]
-                    if _G.autofarmBoss then
+                    -- SECTION 1: Deep Nested Boss Hunt Scraper Layer
+                    if _G.autofarmBoss and BossFolder then
                         for _, outerFolder in pairs(BossFolder:GetChildren()) do
                             if not _G.autofarmBoss then break end
                             
+                            -- Drills down into the second sub-layer to extract the real character model
                             local innerModel = outerFolder:FindFirstChild(outerFolder.Name) or outerFolder:FindFirstChildOfClass("Model")
                             if innerModel and innerModel:IsA("Model") then
                                 local isMatchedBoss = false
@@ -575,11 +582,12 @@ task.spawn(function()
                         end
                     end
                     
-                    -- 2. DEEP SCRAPE: SPAWNENEMY MOBS LAYER ["Bandit[Lv.25]"]["Bandit[Lv.25]"]
-                    if _G.autofarmNPC then
+                    -- SECTION 2: Deep Nested Standard Grunts Mobs Scraper Layer
+                    if _G.autofarmNPC and MobsFolder then
                         for _, outerFolder in pairs(MobsFolder:GetChildren()) do
                             if not _G.autofarmNPC then break end
                             
+                            -- Pulls the raw inner model inside the nested ["Bandit[Lv.25]"] layer
                             local innerModel = outerFolder:FindFirstChild(outerFolder.Name) or outerFolder:FindFirstChildOfClass("Model")
                             if innerModel and innerModel:IsA("Model") then
                                 local isMatchedMob = false
@@ -613,4 +621,4 @@ task.spawn(function()
     end
 end)
 
-print("Cero's Hub: Double-Nested Engines Operational!")
+print("Cero's Hub: Unified Core Farming Engines Safely Loaded!")
