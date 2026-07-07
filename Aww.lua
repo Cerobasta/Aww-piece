@@ -1,6 +1,6 @@
 -- Anti-Duplicate Framework Window Shield
-if game:GetService("CoreGui"):FindFirstChild("Cero_Hub_NewGame") then
-    game:GetService("CoreGui").Cero_Hub_NewGame:Destroy()
+if game:GetService("CoreGui"):FindFirstChild("Cero_Hub_RisePiece") then
+    game:GetService("CoreGui").Cero_Hub_RisePiece:Destroy()
 end
 
 -- Global Configuration States
@@ -15,9 +15,9 @@ local Config = {
     TweenSpeed = 300
 }
 
--- Multi-Selection Target Arrays (Meticulously matched to your Dex images)
+-- Multi-Selection Target Arrays (Cleaned keywords for smart contains checking)
 local TargetsSelected = {
-    -- Normal Grunts Class
+    -- Mobs Class
     ["Angel"] = false,
     ["Bandit"] = false,
     ["Demi-God"] = false,
@@ -39,23 +39,18 @@ local TargetsSelected = {
     ["White Beard Boss"] = false
 }
 
--- Hierarchical Path Configurations
+-- REALIGNED DIRECTORY PATH HOOKS
 local BossFolder = workspace:WaitForChild("Map"):WaitForChild("Boss Spawn")
 local MobsFolder = workspace:WaitForChild("SpawnEnemy")
-local AttackRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RemoteEvents"):WaitForChild("Skills"):WaitForChild("Move")
+
+-- Dynamic Attacks Router Endpoint
+local AttackRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseSkill")
 
 local Player = game:GetService("Players").LocalPlayer
 local TweenService = game:GetService("TweenService")
 local inputService = game:GetService("UserInputService")
 
--- Regex String Engine: Drops level indicators safely for text string comparisons
-local function cleanEnemyName(fullName)
-    if not fullName then return "" end
-    local baseName = string.gsub(fullName, "%[Lv%.%s*%d+%]%", "")
-    return string.gsub(baseName, "%s+$", "")
-end
-
--- Inventory Tool Checker Loop
+-- Active Character Tool Inventory Scanner Core
 local function getAvailableWeapons()
     local list = {}
     local char = Player.Character
@@ -76,6 +71,7 @@ local function getAvailableWeapons()
 end
 
 Config.SelectedWeapon = getAvailableWeapons() or "Combat"
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Cero_Hub_NewGame"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -460,7 +456,7 @@ divMain.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 createUnifiedFarmWindow(ContentFrame, "Start Farm Mobs", "autofarmNPC", {"Angel", "Bandit", "Demi-God", "Demon", "Grade1 Sorcerer", "Monkey", "Mr Boom Boom", "Sailor", "Spellblade"})
 createUnifiedFarmWindow(ContentFrame, "Start Farm Bosses", "autofarmBoss", {"Ace Boss", "Bandit Boss", "Finger Bearer Boss", "Gojo Boss", "Itadori Boss", "Kashimo Boss", "Kizaru Boss", "White Beard Boss"})
 -- =============================================================================
--- [BOX 4: NAVIGATION MOVEMENT ENGINE & REPAIRED SCRAPER LOOP]
+-- [BOX 4: DOUBLE-NESTED DEEP SCRAPER ENGINE]
 -- =============================================================================
 
 task.spawn(function()
@@ -498,7 +494,7 @@ end
 Player.CharacterAdded:Connect(handleStableAutoEquip)
 if Player.Character then task.spawn(handleStableAutoEquip, Player.Character) end
 
--- DYNAMIC NETWORK ATTACK LOOP (Bypasses arm-locks, uses your payload structural details)
+-- STUN-BYPASS NETWORK ATTACK LOOP
 task.spawn(function()
     while true do
         if _G.autofarmNPC or _G.autofarmBoss then
@@ -536,7 +532,7 @@ local function moveToTarget(hrp, targetCFrame)
     end
 end
 
--- FIXED CORE SEARCH ENGINE: Robust Class Scraper targets raw items inside directories directly!
+-- DEEP SUB-FOLDER EXTRACTION LAYER
 task.spawn(function()
     while true do
         task.wait(0.2)
@@ -548,45 +544,63 @@ task.spawn(function()
                 
                 if hrp and humanoid and humanoid.Health > 0 then
                     
-                    -- 1. TRACK ENEMY TARGETS INSIDE THE BOSS FOLDER
+                    -- 1. DEEP SCRAPE: BOSS SPAWN LAYER ["Ace Boss[Lv. 475]"]["Ace Boss[Lv. 475]"]
                     if _G.autofarmBoss then
-                        for _, entity in pairs(BossFolder:GetChildren()) do
+                        for _, outerFolder in pairs(BossFolder:GetChildren()) do
                             if not _G.autofarmBoss then break end
-                            local cleanedName = cleanEnemyName(entity.Name)
                             
-                            if entity:IsA("Model") and TargetsSelected[cleanedName] == true then
-                                local enemyHrp = entity:FindFirstChild("HumanoidRootPart") or entity.PrimaryPart
-                                local enemyHum = entity:FindFirstChildOfClass("Humanoid")
+                            -- Drill down into the identical inner model inside the folder
+                            local innerModel = outerFolder:FindFirstChild(outerFolder.Name) or outerFolder:FindFirstChildOfClass("Model")
+                            if innerModel and innerModel:IsA("Model") then
+                                local isMatchedBoss = false
+                                for selectedName, selectedState in pairs(TargetsSelected) do
+                                    if selectedState == true and string.find(innerModel.Name, selectedName) then
+                                        isMatchedBoss = true
+                                        break
+                                    end
+                                end
                                 
-                                if enemyHrp and enemyHum and enemyHum.Health > 0 and entity.Parent then
-                                    moveToTarget(hrp, getFarmingCFrame(enemyHrp))
-                                    task.wait(0.02)
-                                    while _G.autofarmBoss and enemyHum.Health > 0 and entity.Parent and humanoid.Health > 0 do
-                                        hrp.CFrame = getFarmingCFrame(enemyHrp)
-                                        task.wait()
+                                if isMatchedBoss then
+                                    local enemyHrp = innerModel:FindFirstChild("HumanoidRootPart") or innerModel.PrimaryPart
+                                    local enemyHum = innerModel:FindFirstChildOfClass("Humanoid")
+                                    
+                                    if enemyHrp and enemyHum and enemyHum.Health > 0 and innerModel.Parent then
+                                        moveToTarget(hrp, getFarmingCFrame(enemyHrp))
+                                        task.wait(0.02)
+                                        while _G.autofarmBoss and enemyHum.Health > 0 and innerModel.Parent and humanoid.Health > 0 do
+                                            hrp.CFrame = getFarmingCFrame(enemyHrp)
+                                            task.wait()
+                                        end
                                     end
                                 end
                             end
                         end
                     end
                     
-                    -- 2. DIRECT INSTANCE SCANNER FOR RAW SPAWNENEMY OBJECTS
+                    -- 2. DEEP SCRAPE: SPAWNENEMY MOBS LAYER ["Bandit[Lv.25]"]["Bandit[Lv.25]"]
                     if _G.autofarmNPC then
-                        for _, entity in pairs(MobsFolder:GetChildren()) do
+                        for _, outerFolder in pairs(MobsFolder:GetChildren()) do
                             if not _G.autofarmNPC then break end
                             
-                            -- Handles both child folder setups and raw nested entities natively
-                            local targetModel = entity:IsA("Model") and entity or entity:FindFirstChildOfClass("Model")
-                            if targetModel then
-                                local cleanedName = cleanEnemyName(targetModel.Name)
-                                if TargetsSelected[cleanedName] == true then
-                                    local enemyHrp = targetModel:FindFirstChild("HumanoidRootPart") or targetModel.PrimaryPart
-                                    local enemyHum = targetModel:FindFirstChildOfClass("Humanoid")
+                            -- Drill down into the identical inner character model inside the folder
+                            local innerModel = outerFolder:FindFirstChild(outerFolder.Name) or outerFolder:FindFirstChildOfClass("Model")
+                            if innerModel and innerModel:IsA("Model") then
+                                local isMatchedMob = false
+                                for selectedName, selectedState in pairs(TargetsSelected) do
+                                    if selectedState == true and string.find(innerModel.Name, selectedName) then
+                                        isMatchedMob = true
+                                        break
+                                    end
+                                end
+                                
+                                if isMatchedMob then
+                                    local enemyHrp = innerModel:FindFirstChild("HumanoidRootPart") or innerModel.PrimaryPart
+                                    local enemyHum = innerModel:FindFirstChildOfClass("Humanoid")
                                     
-                                    if enemyHrp and enemyHum and enemyHum.Health > 0 and entity.Parent then
+                                    if enemyHrp and enemyHum and enemyHum.Health > 0 and innerModel.Parent then
                                         moveToTarget(hrp, getFarmingCFrame(enemyHrp))
                                         task.wait(0.02)
-                                        while _G.autofarmNPC and enemyHum.Health > 0 and entity.Parent and humanoid.Health > 0 do
+                                        while _G.autofarmNPC and enemyHum.Health > 0 and innerModel.Parent and humanoid.Health > 0 do
                                             hrp.CFrame = getFarmingCFrame(enemyHrp)
                                             task.wait()
                                         end
@@ -602,5 +616,4 @@ task.spawn(function()
     end
 end)
 
-print("Cero's Hub: Core Edition Successfully Armed!")
-
+print("Cero's Hub: Double-Nested Engines Operational!")
