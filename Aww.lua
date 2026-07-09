@@ -7,7 +7,8 @@ end
 _G.autofarmNPC = false
 _G.autofarmBoss = false
 
-local Config = {
+-- Renamed to CeroConfig to fix the Delta protected keyword crash
+CeroConfig = {
     FarmMethod = "Upper",      -- "Upper", "Lower", "Behind"
     FarmDistance = 5,          -- Bound distance via slider config
     SelectedWeapon = "Default",-- Managed dynamically by your gear choices
@@ -61,8 +62,7 @@ local function getAvailableWeapons()
     return list
 end
 
-Config.SelectedWeapon = getAvailableWeapons() or "Combat"
-
+CeroConfig.SelectedWeapon = getAvailableWeapons() or "Combat"
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Cero_Hub_RisePiece"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -99,7 +99,7 @@ BorderStroke.Thickness = 4
 BorderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 BorderStroke.Parent = MainFrame
 task.spawn(function()
-    while task.wait(0.1) do -- Adjusted to 0.1 to clear engine packet spam
+    while task.wait(0.1) do 
         BorderStroke.Color = Color3.fromHSV((tick() % 4) / 4, 0.8, 1)
     end
 end)
@@ -182,7 +182,6 @@ ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ContentFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 30)
 end)
-
 local function createDropdown(parent, labelText, currentVal, options, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -5, 0, 36)
@@ -242,7 +241,7 @@ local function createWeaponDropdown(parent, labelText)
     btn.Size = UDim2.new(0.5, 0, 0.75, 0)
     btn.Position = UDim2.new(0.45, 0, 0.125, 0)
     btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    btn.Text = tostring(Config.SelectedWeapon)
+    btn.Text = tostring(CeroConfig.SelectedWeapon)
     btn.TextColor3 = Color3.fromRGB(255, 165, 0)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 13
@@ -252,9 +251,9 @@ local function createWeaponDropdown(parent, labelText)
     btn.MouseButton1Click:Connect(function()
         local active = getAvailableWeapons()
         local idx = 1
-        for i, w in ipairs(active) do if w == Config.SelectedWeapon then idx = i end end
+        for i, w in ipairs(active) do if w == CeroConfig.SelectedWeapon then idx = i end end
         idx = idx + 1 if idx > #active then idx = 1 end
-        Config.SelectedWeapon = active[idx] btn.Text = active[idx]
+        CeroConfig.SelectedWeapon = active[idx] btn.Text = active[idx]
     end)
 end
 
@@ -269,7 +268,7 @@ local function createDistanceSlider(parent)
     lbl.Size = UDim2.new(0.5, 0, 0, 20)
     lbl.Position = UDim2.new(0, 10, 0, 4)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "Farm Distance: " .. tostring(Config.FarmDistance) .. " studs"
+    lbl.Text = "Farm Distance: " .. tostring(CeroConfig.FarmDistance) .. " studs"
     lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
     lbl.Font = Enum.Font.SourceSans
     lbl.TextSize = 13
@@ -285,7 +284,7 @@ local function createDistanceSlider(parent)
     Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(0, 3)
     
     local sliderFill = Instance.new("Frame")
-    sliderFill.Size = UDim2.new((Config.FarmDistance - 6) / 18, 0, 1, 0)
+    sliderFill.Size = UDim2.new((CeroConfig.FarmDistance - 6) / 18, 0, 1, 0)
     sliderFill.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
     sliderFill.BorderSizePixel = 0
     sliderFill.Parent = sliderBar
@@ -295,7 +294,7 @@ local function createDistanceSlider(parent)
         local percentage = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
         sliderFill.Size = UDim2.new(percentage, 0, 1, 0)
         local calculatedDistance = math.floor(6 + (percentage * 18))
-        Config.FarmDistance = calculatedDistance
+        CeroConfig.FarmDistance = calculatedDistance
         lbl.Text = "Farm Distance: " .. tostring(calculatedDistance) .. " studs"
     end
     
@@ -418,27 +417,27 @@ local function createUnifiedFarmWindow(parent, panelTitle, farmGlobalKey, arrayO
         row.Parent = popoutMenu
         Instance.new("UICorner", row).CornerRadius = UDim.new(0, 3)
 
-        row.MouseButton1Click:Connect(function()
-                        TargetsSelected[optName] = not TargetsSelected[optName]
-        row.BackgroundColor3 = TargetsSelected[optName] and Color3.fromRGB(240, 140, 20) or Color3.fromRGB(28, 28, 30)
-        row.TextColor3 = TargetsSelected[optName] and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(170, 170, 170)
-        
-        local activeCount = 0
-        for _, v in ipairs(arrayOptionsList) do 
-            if TargetsSelected[v] then 
-                activeCount = activeCount + 1 
-            end 
-        end
-        dropdownSelector.Text = activeCount > 0 and "(" .. activeCount .. ") Selected" or "Choose target..."
-    end)
-end
+                row.MouseButton1Click:Connect(function()
+            TargetsSelected[optName] = not TargetsSelected[optName]
+            row.BackgroundColor3 = TargetsSelected[optName] and Color3.fromRGB(240, 140, 20) or Color3.fromRGB(28, 28, 30)
+            row.TextColor3 = TargetsSelected[optName] and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(170, 170, 170)
+            
+            local activeCount = 0
+            for _, v in ipairs(arrayOptionsList) do 
+                if TargetsSelected[v] then 
+                    activeCount = activeCount + 1 
+                end 
+            end
+            dropdownSelector.Text = activeCount > 0 and "(" .. activeCount .. ") Selected" or "Choose target..."
+        end)
+    end
 end
 
 -- Render settings panel fields
-createDropdown(ContentFrame, "Farming Vector Angle:", Config.FarmMethod, {"Upper", "Lower", "Behind"}, function(v) Config.FarmMethod = v end)
+createDropdown(ContentFrame, "Farming Vector Angle:", CeroConfig.FarmMethod, {"Upper", "Lower", "Behind"}, function(v) CeroConfig.FarmMethod = v end)
 createWeaponDropdown(ContentFrame, "Equipped Attack Gear:")
-createDropdown(ContentFrame, "Movement Vector:", Config.MovementType, {"Tween", "Teleport"}, function(v) Config.MovementType = v end)
-createDropdown(ContentFrame, "Tween Velocity speed:", Config.TweenSpeed, {150, 300, 450, 600}, function(v) Config.TweenSpeed = v end)
+createDropdown(ContentFrame, "Movement Vector:", CeroConfig.MovementType, {"Tween", "Teleport"}, function(v) CeroConfig.MovementType = v end)
+createDropdown(ContentFrame, "Tween Velocity speed:", CeroConfig.TweenSpeed, {150, 300, 450, 600}, function(v) CeroConfig.TweenSpeed = v end)
 createDistanceSlider(ContentFrame)
 
 local divMain = Instance.new("Frame", ContentFrame)
@@ -467,17 +466,17 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.5) -- Shifted delay to minimize frame execution weight
+        task.wait(0.5) 
     end
 end)
 
 local function handleStableAutoEquip(character)
     task.wait(1.5)
-    if (_G.autofarmNPC or _G.autofarmBoss) and Config.SelectedWeapon ~= "Default" then
+    if (_G.autofarmNPC or _G.autofarmBoss) and CeroConfig.SelectedWeapon ~= "Default" then
         pcall(function()
             local backpack = Player:WaitForChild("Backpack", 5)
             if backpack then
-                local targetWeapon = backpack:FindFirstChild(Config.SelectedWeapon)
+                local targetWeapon = backpack:FindFirstChild(CeroConfig.SelectedWeapon)
                 if targetWeapon then
                     targetWeapon.Parent = character
                     task.wait(0.4)
@@ -495,23 +494,23 @@ task.spawn(function()
         if _G.autofarmNPC or _G.autofarmBoss then
             pcall(function()
                 local char = Player.Character
-                if char and Config.SelectedWeapon ~= "Default" then
-                    local currentTool = char:FindFirstChild(Config.SelectedWeapon)
+                if char and CeroConfig.SelectedWeapon ~= "Default" then
+                    local currentTool = char:FindFirstChild(CeroConfig.SelectedWeapon)
                     if currentTool and currentTool:IsA("Tool") then
                         currentTool:Activate()
                     end
                 end
             end)
         end
-        task.wait(0.4) -- Stabilized tool usage intervals
+        task.wait(0.4) 
     end
 end)
 
 local function getFarmingCFrame(targetHrp)
-    local d = Config.FarmDistance
-    if Config.FarmMethod == "Upper" then
+    local d = CeroConfig.FarmDistance
+    if CeroConfig.FarmMethod == "Upper" then
         return targetHrp.CFrame * CFrame.new(0, d, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-    elseif Config.FarmMethod == "Lower" then
+    elseif CeroConfig.FarmMethod == "Lower" then
         return targetHrp.CFrame * CFrame.new(0, -d, 0) * CFrame.Angles(math.rad(90), 0, 0)
     else
         return targetHrp.CFrame * CFrame.new(0, 0, d)
@@ -519,11 +518,11 @@ local function getFarmingCFrame(targetHrp)
 end
 
 local function moveToTarget(hrp, targetCFrame)
-    if Config.MovementType == "Teleport" then
+    if CeroConfig.MovementType == "Teleport" then
         hrp.CFrame = targetCFrame
     else
         local dist = (hrp.Position - targetCFrame.Position).Magnitude
-        local duration = dist / math.max(Config.TweenSpeed, 50)
+        local duration = dist / math.max(CeroConfig.TweenSpeed, 50)
         local tInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
         local tween = TweenService:Create(hrp, tInfo, {CFrame = targetCFrame})
         tween:Play()
@@ -533,7 +532,7 @@ end
 
 task.spawn(function()
     while true do
-        task.wait(0.5) -- Calm scan delay to stop server disconnect kicks
+        task.wait(0.5) 
         if _G.autofarmNPC or _G.autofarmBoss then
             pcall(function()
                 local char = Player.Character
@@ -541,13 +540,12 @@ task.spawn(function()
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
                 
                 if hrp and humanoid and humanoid.Health > 0 then
-                    -- Unwraps Island folders dynamically from inside workspace.Enemies
                     for _, islandFolder in pairs(EnemiesFolder:GetChildren()) do
                         if not _G.autofarmNPC and not _G.autofarmBoss then break end
                         
                         for _, entity in pairs(islandFolder:GetChildren()) do
                             if not _G.autofarmNPC and not _G.autofarmBoss then break end
-                            task.wait(0.01) -- Mandatory sub-yield to prevent engine thread saturation
+                            task.wait(0.01) 
                             
                             if entity:IsA("Model") and TargetsSelected[entity.Name] == true then
                                 local isBoss = string.find(string.lower(entity.Name), "boss") ~= nil or string.find(string.lower(entity.Name), "king") ~= nil
@@ -566,7 +564,7 @@ task.spawn(function()
                                         
                                         while (_G.autofarmNPC or _G.autofarmBoss) and enemyHum.Health > 0 and entity.Parent and humanoid.Health > 0 do
                                             hrp.CFrame = getFarmingCFrame(enemyHrp)
-                                            task.wait(0.05) -- Internal yield to clear performance leaks
+                                            task.wait(0.05) 
                                         end
                                     end
                                 end
