@@ -99,7 +99,7 @@ BorderStroke.Thickness = 4
 BorderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 BorderStroke.Parent = MainFrame
 task.spawn(function()
-    while task.wait(0.05) do -- Added specific wait time to stop execution lag
+    while task.wait(0.1) do -- Adjusted to 0.1 to clear engine packet spam
         BorderStroke.Color = Color3.fromHSV((tick() % 4) / 4, 0.8, 1)
     end
 end)
@@ -139,7 +139,7 @@ Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
 local FloatStroke = Instance.new("UIStroke")
 FloatStroke.Thickness = 2
 FloatStroke.Parent = FloatBtn
-task.spawn(function() while task.wait(0.05) do FloatStroke.Color = BorderStroke.Color end end)
+task.spawn(function() while task.wait(0.1) do FloatStroke.Color = BorderStroke.Color end end)
 makeDraggable(FloatBtn)
 
 FloatBtn.MouseButton1Click:Connect(function()
@@ -182,6 +182,7 @@ ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ContentFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 30)
 end)
+
 local function createDropdown(parent, labelText, currentVal, options, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -5, 0, 36)
@@ -466,7 +467,7 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.3) -- Throttled loop timing to reduce server footprint
+        task.wait(0.5) -- Shifted delay to minimize frame execution weight
     end
 end)
 
@@ -479,7 +480,7 @@ local function handleStableAutoEquip(character)
                 local targetWeapon = backpack:FindFirstChild(Config.SelectedWeapon)
                 if targetWeapon then
                     targetWeapon.Parent = character
-                    task.wait(0.3)
+                    task.wait(0.4)
                 end
             end
         end)
@@ -502,7 +503,7 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.3) -- Slowed down tool weapon swing activations to clear the HTTP 429 bug
+        task.wait(0.4) -- Stabilized tool usage intervals
     end
 end)
 
@@ -532,7 +533,7 @@ end
 
 task.spawn(function()
     while true do
-        task.wait(0.4) -- Stabilized scan frequency 
+        task.wait(0.5) -- Calm scan delay to stop server disconnect kicks
         if _G.autofarmNPC or _G.autofarmBoss then
             pcall(function()
                 local char = Player.Character
@@ -546,6 +547,7 @@ task.spawn(function()
                         
                         for _, entity in pairs(islandFolder:GetChildren()) do
                             if not _G.autofarmNPC and not _G.autofarmBoss then break end
+                            task.wait(0.01) -- Mandatory sub-yield to prevent engine thread saturation
                             
                             if entity:IsA("Model") and TargetsSelected[entity.Name] == true then
                                 local isBoss = string.find(string.lower(entity.Name), "boss") ~= nil or string.find(string.lower(entity.Name), "king") ~= nil
