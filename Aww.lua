@@ -62,6 +62,7 @@ local function getAvailableWeapons()
 end
 
 Config.SelectedWeapon = getAvailableWeapons() or "Combat"
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Cero_Hub_RisePiece"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -98,7 +99,7 @@ BorderStroke.Thickness = 4
 BorderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 BorderStroke.Parent = MainFrame
 task.spawn(function()
-    while task.wait() do
+    while task.wait(0.05) do -- Added specific wait time to stop execution lag
         BorderStroke.Color = Color3.fromHSV((tick() % 4) / 4, 0.8, 1)
     end
 end)
@@ -138,7 +139,7 @@ Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
 local FloatStroke = Instance.new("UIStroke")
 FloatStroke.Thickness = 2
 FloatStroke.Parent = FloatBtn
-task.spawn(function() while task.wait() do FloatStroke.Color = BorderStroke.Color end end)
+task.spawn(function() while task.wait(0.05) do FloatStroke.Color = BorderStroke.Color end end)
 makeDraggable(FloatBtn)
 
 FloatBtn.MouseButton1Click:Connect(function()
@@ -465,12 +466,12 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.1)
+        task.wait(0.3) -- Throttled loop timing to reduce server footprint
     end
 end)
 
 local function handleStableAutoEquip(character)
-    task.wait(1.2)
+    task.wait(1.5)
     if (_G.autofarmNPC or _G.autofarmBoss) and Config.SelectedWeapon ~= "Default" then
         pcall(function()
             local backpack = Player:WaitForChild("Backpack", 5)
@@ -478,7 +479,7 @@ local function handleStableAutoEquip(character)
                 local targetWeapon = backpack:FindFirstChild(Config.SelectedWeapon)
                 if targetWeapon then
                     targetWeapon.Parent = character
-                    task.wait(0.15)
+                    task.wait(0.3)
                 end
             end
         end)
@@ -501,7 +502,7 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.15)
+        task.wait(0.3) -- Slowed down tool weapon swing activations to clear the HTTP 429 bug
     end
 end)
 
@@ -531,7 +532,7 @@ end
 
 task.spawn(function()
     while true do
-        task.wait(0.2)
+        task.wait(0.4) -- Stabilized scan frequency 
         if _G.autofarmNPC or _G.autofarmBoss then
             pcall(function()
                 local char = Player.Character
@@ -559,11 +560,11 @@ task.spawn(function()
                                     
                                     if enemyHrp and enemyHum and enemyHum.Health > 0 and entity.Parent then
                                         moveToTarget(hrp, getFarmingCFrame(enemyHrp))
-                                        task.wait(0.02)
+                                        task.wait(0.05)
                                         
                                         while (_G.autofarmNPC or _G.autofarmBoss) and enemyHum.Health > 0 and entity.Parent and humanoid.Health > 0 do
                                             hrp.CFrame = getFarmingCFrame(enemyHrp)
-                                            task.wait()
+                                            task.wait(0.05) -- Internal yield to clear performance leaks
                                         end
                                     end
                                 end
