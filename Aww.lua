@@ -15,36 +15,27 @@ local Config = {
     TweenSpeed = 300
 }
 
--- Multi-Selection Target Arrays (Meticulously matched to Rise Piece indexes)
+-- Multi-Selection Target Arrays (Meticulously matched to Island 1-4 screenshots)
 local TargetsSelected = {
-    -- Normal Mobs Class
-    ["Angel"] = false,
-    ["Bandit"] = false,
-    ["Demi-God"] = false,
-    ["Demon"] = false,
-    ["Grade1 Sorcerer"] = false,
-    ["Monkey"] = false,
-    ["Mr Boom Boom"] = false,
-    ["Sailor"] = false,
-    ["Spellblade"] = false,
+    -- Normal Grunts Class
+    ["Shane Bandit"] = false,
+    ["Sand Thief"] = false,
+    ["Jungle Bandit"] = false,
+    ["Cursed Bandit"] = false,
+    ["Cursed Student 1"] = false,
+    ["Cursed Student 2"] = false,
+    ["Cursed Student 3"] = false,
+    ["Cursed Student 4"] = false,
+    ["Cursed Student 5"] = false,
 
     -- Bosses Class
-    ["Ace Boss"] = false,
-    ["Bandit Boss"] = false,
-    ["Finger Bearer Boss"] = false,
-    ["Gojo Boss"] = false,
-    ["Itadori Boss"] = false,
-    ["Kashimo Boss"] = false,
-    ["Kizaru Boss"] = false,
-    ["White Beard Boss"] = false
+    ["Shane Bandit Boss"] = false,
+    ["Sand King Boss"] = false,
+    ["Jungle Boss"] = false
 }
 
--- REALIGNED DIRECTORY PATH HOOKS (Your Double-Nested Locations)
-local BossFolder = workspace:WaitForChild("Map"):WaitForChild("Boss Spawn")
-local MobsFolder = workspace:WaitForChild("SpawnEnemy")
-
--- Dynamic Attacks Router Endpoint
-local AttackRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseSkill")
+-- Game Engine Hierarchy Paths Mappings adjusted directly to your Workspace layout
+local EnemiesFolder = workspace:WaitForChild("Enemies")
 
 local Player = game:GetService("Players").LocalPlayer
 local TweenService = game:GetService("TweenService")
@@ -70,7 +61,7 @@ local function getAvailableWeapons()
     return list
 end
 
-Config.SelectedWeapon = getAvailableWeapons()[1] or "Combat"
+Config.SelectedWeapon = getAvailableWeapons() or "Combat"
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Cero_Hub_RisePiece"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -451,15 +442,17 @@ createDistanceSlider(ContentFrame)
 local divMain = Instance.new("Frame", ContentFrame)
 divMain.Size = UDim2.new(1, 0, 0, 2)
 divMain.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-divMain.Parent = ContentFrame
 
-createUnifiedFarmWindow(ContentFrame, "Start Farm Mobs", "autofarmNPC", {"Angel", "Bandit", "Demi-God", "Demon", "Grade1 Sorcerer", "Monkey", "Mr Boom Boom", "Sailor", "Spellblade"})
-createUnifiedFarmWindow(ContentFrame, "Start Farm Bosses", "autofarmBoss", {"Ace Boss", "Bandit Boss", "Finger Bearer Boss", "Gojo Boss", "Itadori Boss", "Kashimo Boss", "Kizaru Boss", "White Beard Boss"})
--- =============================================================================
--- [BOX 4: REPAIRED DEEP NESTED SCRAPER & ATTACK ENGINE]
--- =============================================================================
+-- Refactored target initialization values built for Island 1 to 4 folder hierarchies
+createUnifiedFarmWindow(ContentFrame, "Start Farm Mobs", "autofarmNPC", {
+    "Shane Bandit", "Sand Thief", "Jungle Bandit", 
+    "Cursed Bandit", "Cursed Student 1", "Cursed Student 2", 
+    "Cursed Student 3", "Cursed Student 4", "Cursed Student 5"
+})
 
--- Background Thread: Continuous Geometry No-Collide Mode
+createUnifiedFarmWindow(ContentFrame, "Start Farm Bosses", "autofarmBoss", {
+    "Shane Bandit Boss", "Sand King Boss", "Jungle Boss"
+})
 task.spawn(function()
     while true do
         if _G.autofarmNPC or _G.autofarmBoss then
@@ -467,9 +460,7 @@ task.spawn(function()
                 local char = Player.Character
                 if char then
                     for _, part in pairs(char:GetDescendants()) do
-                        if part:IsA("BasePart") and part.CanCollide then 
-                            part.CanCollide = false 
-                        end
+                        if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
                     end
                 end
             end)
@@ -478,7 +469,6 @@ task.spawn(function()
     end
 end)
 
--- Stable Weapon Controller: Handles inventory equips on spawn without lag loops
 local function handleStableAutoEquip(character)
     task.wait(1.2)
     if (_G.autofarmNPC or _G.autofarmBoss) and Config.SelectedWeapon ~= "Default" then
@@ -498,18 +488,20 @@ end
 Player.CharacterAdded:Connect(handleStableAutoEquip)
 if Player.Character then task.spawn(handleStableAutoEquip, Player.Character) end
 
--- ANIMATION BYPASS REMOTE INJECTOR: Ignores player arm-locks and stuns completely!
 task.spawn(function()
     while true do
         if _G.autofarmNPC or _G.autofarmBoss then
             pcall(function()
-                local activeWeapon = (Config.SelectedWeapon ~= "Default") and Config.SelectedWeapon or "Combat"
-                -- Pushes your updated "Punching" remote payload properties natively
-                local attackPayload = { activeWeapon, "Punching" }
-                AttackRemote:FireServer(unpack(attackPayload))
+                local char = Player.Character
+                if char and Config.SelectedWeapon ~= "Default" then
+                    local currentTool = char:FindFirstChild(Config.SelectedWeapon)
+                    if currentTool and currentTool:IsA("Tool") then
+                        currentTool:Activate()
+                    end
+                end
             end)
         end
-        task.wait(0.13) -- Balanced frequency throughput to optimize clear speeds
+        task.wait(0.15)
     end
 end)
 
@@ -537,7 +529,6 @@ local function moveToTarget(hrp, targetCFrame)
     end
 end
 
--- DUAL-LAYER GEOMETRY SEARCH LOOPS (Fixed Folder Structural Paths Tracker)
 task.spawn(function()
     while true do
         task.wait(0.2)
@@ -548,31 +539,29 @@ task.spawn(function()
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
                 
                 if hrp and humanoid and humanoid.Health > 0 then
-                    
-                    -- SECTION 1: Deep Nested Boss Hunt Scraper Layer
-                    if _G.autofarmBoss and BossFolder then
-                        for _, outerFolder in pairs(BossFolder:GetChildren()) do
-                            if not _G.autofarmBoss then break end
+                    -- Unwraps Island folders dynamically from inside workspace.Enemies
+                    for _, islandFolder in pairs(EnemiesFolder:GetChildren()) do
+                        if not _G.autofarmNPC and not _G.autofarmBoss then break end
+                        
+                        for _, entity in pairs(islandFolder:GetChildren()) do
+                            if not _G.autofarmNPC and not _G.autofarmBoss then break end
                             
-                            -- Drills down into the second sub-layer to extract the real character model
-                            local innerModel = outerFolder:FindFirstChild(outerFolder.Name) or outerFolder:FindFirstChildOfClass("Model")
-                            if innerModel and innerModel:IsA("Model") then
-                                local isMatchedBoss = false
-                                for selectedName, selectedState in pairs(TargetsSelected) do
-                                    if selectedState == true and string.find(innerModel.Name, selectedName) then
-                                        isMatchedBoss = true
-                                        break
-                                    end
-                                end
+                            if entity:IsA("Model") and TargetsSelected[entity.Name] == true then
+                                local isBoss = string.find(string.lower(entity.Name), "boss") ~= nil or string.find(string.lower(entity.Name), "king") ~= nil
+                                local allowedToFarm = false
                                 
-                                if isMatchedBoss then
-                                    local enemyHrp = innerModel:FindFirstChild("HumanoidRootPart") or innerModel.PrimaryPart
-                                    local enemyHum = innerModel:FindFirstChildOfClass("Humanoid")
+                                if isBoss and _G.autofarmBoss then allowedToFarm = true
+                                elseif not isBoss and _G.autofarmNPC then allowedToFarm = true end
+                                
+                                if allowedToFarm then
+                                    local enemyHrp = entity:FindFirstChild("HumanoidRootPart") or entity.PrimaryPart
+                                    local enemyHum = entity:FindFirstChildOfClass("Humanoid")
                                     
-                                    if enemyHrp and enemyHum and enemyHum.Health > 0 and innerModel.Parent then
+                                    if enemyHrp and enemyHum and enemyHum.Health > 0 and entity.Parent then
                                         moveToTarget(hrp, getFarmingCFrame(enemyHrp))
                                         task.wait(0.02)
-                                        while _G.autofarmBoss and enemyHum.Health > 0 and innerModel.Parent and humanoid.Health > 0 do
+                                        
+                                        while (_G.autofarmNPC or _G.autofarmBoss) and enemyHum.Health > 0 and entity.Parent and humanoid.Health > 0 do
                                             hrp.CFrame = getFarmingCFrame(enemyHrp)
                                             task.wait()
                                         end
@@ -581,44 +570,10 @@ task.spawn(function()
                             end
                         end
                     end
-                    
-                    -- SECTION 2: Deep Nested Standard Grunts Mobs Scraper Layer
-                    if _G.autofarmNPC and MobsFolder then
-                        for _, outerFolder in pairs(MobsFolder:GetChildren()) do
-                            if not _G.autofarmNPC then break end
-                            
-                            -- Pulls the raw inner model inside the nested ["Bandit[Lv.25]"] layer
-                            local innerModel = outerFolder:FindFirstChild(outerFolder.Name) or outerFolder:FindFirstChildOfClass("Model")
-                            if innerModel and innerModel:IsA("Model") then
-                                local isMatchedMob = false
-                                for selectedName, selectedState in pairs(TargetsSelected) do
-                                    if selectedState == true and string.find(innerModel.Name, selectedName) then
-                                        isMatchedMob = true
-                                        break
-                                    end
-                                end
-                                
-                                if isMatchedMob then
-                                    local enemyHrp = innerModel:FindFirstChild("HumanoidRootPart") or innerModel.PrimaryPart
-                                    local enemyHum = innerModel:FindFirstChildOfClass("Humanoid")
-                                    
-                                    if enemyHrp and enemyHum and enemyHum.Health > 0 and innerModel.Parent then
-                                        moveToTarget(hrp, getFarmingCFrame(enemyHrp))
-                                        task.wait(0.02)
-                                        while _G.autofarmNPC and enemyHum.Health > 0 and innerModel.Parent and humanoid.Health > 0 do
-                                            hrp.CFrame = getFarmingCFrame(enemyHrp)
-                                            task.wait()
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    
                 end
             end)
         end
     end
 end)
 
-print("Cero's Hub: Unified Core Farming Engines Safely Loaded!")
+print("Cero's Hub: Rise Piece Edition successfully initialized!")
